@@ -1,7 +1,0 @@
---cpu Cortex-M4.fp -g --apcs=interwork --pd "__MICROLIB SETA 1"
--I D:\Project\nRF52\nRF5_SDK_11.0.0_mod\ble_app_hrs\pca10040\RTE
--I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include
--I C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.1\Device\Include
--I C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.2\Device\Include
---pd "__UVISION_VERSION SETA 517" --pd "_RTE_ SETA 1" --pd "NRF52 SETA 1" --pd "BLE_STACK_SUPPORT_REQD SETA 1" --pd "NRF52_PAN_53 SETA 1" --pd "NRF52_PAN_15 SETA 1" --pd "NRF52_PAN_54 SETA 1" --pd "NRF52_PAN_20 SETA 1" --pd "NRF52_PAN_55 SETA 1" --pd "NRF52_PAN_30 SETA 1" --pd "NRF52_PAN_58 SETA 1" --pd "NRF52_PAN_31 SETA 1" --pd "NRF52_PAN_62 SETA 1" --pd "NRF52_PAN_36 SETA 1" --pd "NRF52_PAN_63 SETA 1" --pd "NRF52_PAN_51 SETA 1" --pd "NRF52_PAN_64 SETA 1" --pd "CONFIG_GPIO_AS_PINRESET SETA 1" --pd "BOARD_PCA10040 SETA 1" --pd "NRF52_PAN_12 SETA 1" --pd "S132 SETA 1" --pd "SWI_DISABLE0 SETA 1" --pd "NRF52 SETA 1" --pd "SOFTDEVICE_PRESENT SETA 1" --pd "NRF_LOG_USES_UART SETA 1"
---list .\_build\arm_startup_nrf52.lst --xref -o .\_build\arm_startup_nrf52.o --depend .\_build\arm_startup_nrf52.d "RTE\Device\nRF52832_xxAA\arm_startup_nrf52.s"

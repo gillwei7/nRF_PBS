@@ -3,9 +3,9 @@
 <title>Static Call Graph - [.\_build\nrf52832_xxaa_s132.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\_build\nrf52832_xxaa_s132.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060061: Last Updated: Fri Feb 19 13:26:37 2016
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060061: Last Updated: Fri Feb 26 15:49:26 2016
 <BR><P>
-<H3>Maximum Stack Usage =        424 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
+<H3>Maximum Stack Usage =        408 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
 main &rArr; services_init &rArr; ble_pbs_init &rArr; pbs_char_add &rArr; app_error_handler_bare
 <P>
@@ -333,8 +333,6 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[bc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_conn_params_init
 <LI><a href="#[b2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_advertising_init
 <LI><a href="#[a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;app_uart_init
-<LI><a href="#[10c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;services_init
-<LI><a href="#[40]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dhrc_timeout_handler
 <LI><a href="#[48]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gatts_context_store
 </UL>
 
@@ -551,8 +549,7 @@ Global Symbols
 </UL>
 <BR>[Called By]<UL><LI><a href="#[cc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_write
 <LI><a href="#[c5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_pbs_init
-<LI><a href="#[c3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_pbs_cdrc_update
-<LI><a href="#[2d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
+<LI><a href="#[c3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_pbs_drhc_update
 <LI><a href="#[40]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dhrc_timeout_handler
 </UL>
 
@@ -780,6 +777,7 @@ Global Symbols
 <LI><a href="#[b7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_advertising_on_sys_evt
 <LI><a href="#[b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_advertising_on_ble_evt
 <LI><a href="#[2d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
+<LI><a href="#[35]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_evt_dispatch
 </UL>
 
 <P><STRONG><a name="[bc]"></a>ble_conn_params_init</STRONG> (Thumb, 72 bytes, Stack size 16 bytes, ble_conn_params.o(i.ble_conn_params_init))
@@ -800,16 +798,16 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[35]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_evt_dispatch
 </UL>
 
-<P><STRONG><a name="[c3]"></a>ble_pbs_cdrc_update</STRONG> (Thumb, 118 bytes, Stack size 40 bytes, ble_pbs.o(i.ble_pbs_cdrc_update))
-<BR><BR>[Stack]<UL><LI>Max Depth = 64<LI>Call Chain = ble_pbs_cdrc_update &rArr; __2printf
+<P><STRONG><a name="[c3]"></a>ble_pbs_drhc_update</STRONG> (Thumb, 120 bytes, Stack size 48 bytes, ble_pbs.o(i.ble_pbs_drhc_update))
+<BR><BR>[Stack]<UL><LI>Max Depth = 72<LI>Call Chain = ble_pbs_drhc_update &rArr; __2printf
 </UL>
 <BR>[Calls]<UL><LI><a href="#[c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
 </UL>
 <BR>[Called By]<UL><LI><a href="#[40]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dhrc_timeout_handler
 </UL>
 
-<P><STRONG><a name="[c5]"></a>ble_pbs_init</STRONG> (Thumb, 720 bytes, Stack size 176 bytes, ble_pbs.o(i.ble_pbs_init))
-<BR><BR>[Stack]<UL><LI>Max Depth = 256<LI>Call Chain = ble_pbs_init &rArr; pbs_char_add &rArr; app_error_handler_bare
+<P><STRONG><a name="[c5]"></a>ble_pbs_init</STRONG> (Thumb, 716 bytes, Stack size 160 bytes, ble_pbs.o(i.ble_pbs_init))
+<BR><BR>[Stack]<UL><LI>Max Depth = 240<LI>Call Chain = ble_pbs_init &rArr; pbs_char_add &rArr; app_error_handler_bare
 </UL>
 <BR>[Calls]<UL><LI><a href="#[c8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uint16_encode
 <LI><a href="#[c7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pbs_char_add
@@ -1010,8 +1008,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[1f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SWI2_EGU2_IRQHandler
 </UL>
 
-<P><STRONG><a name="[2d]"></a>main</STRONG> (Thumb, 458 bytes, Stack size 112 bytes, main.o(i.main))
-<BR><BR>[Stack]<UL><LI>Max Depth = 424<LI>Call Chain = main &rArr; services_init &rArr; ble_pbs_init &rArr; pbs_char_add &rArr; app_error_handler_bare
+<P><STRONG><a name="[2d]"></a>main</STRONG> (Thumb, 438 bytes, Stack size 112 bytes, main.o(i.main))
+<BR><BR>[Stack]<UL><LI>Max Depth = 408<LI>Call Chain = main &rArr; services_init &rArr; ble_pbs_init &rArr; pbs_char_add &rArr; app_error_handler_bare
 </UL>
 <BR>[Calls]<UL><LI><a href="#[10d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sensorsim_init
 <LI><a href="#[101]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_data_set_write
@@ -1031,7 +1029,6 @@ Global Symbols
 <LI><a href="#[f2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;device_manager_init
 <LI><a href="#[cd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_stack_init
 <LI><a href="#[b4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
-<LI><a href="#[c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> entry9a.o(.ARM.Collect$$$$0000000B)
 </UL>
@@ -1280,7 +1277,7 @@ Global Symbols
 <H3>
 Local Symbols
 </H3>
-<P><STRONG><a name="[35]"></a>ble_evt_dispatch</STRONG> (Thumb, 74 bytes, Stack size 16 bytes, main.o(i.ble_evt_dispatch))
+<P><STRONG><a name="[35]"></a>ble_evt_dispatch</STRONG> (Thumb, 82 bytes, Stack size 16 bytes, main.o(i.ble_evt_dispatch))
 <BR><BR>[Stack]<UL><LI>Max Depth = 312<LI>Call Chain = ble_evt_dispatch &rArr; ble_advertising_on_ble_evt &rArr; ble_advertising_start &rArr; ble_advdata_set &rArr; adv_data_encode &rArr; uuid_list_encode &rArr; uuid_list_sized_encode
 </UL>
 <BR>[Calls]<UL><LI><a href="#[bf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dm_ble_evt_handler
@@ -1288,6 +1285,7 @@ Local Symbols
 <LI><a href="#[c1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;bsp_btn_ble_on_ble_evt
 <LI><a href="#[c0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_pbs_on_ble_evt
 <LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_conn_params_on_ble_evt
+<LI><a href="#[b6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_advertising_start
 <LI><a href="#[b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_advertising_on_ble_evt
 <LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;app_error_handler_bare
 </UL>
@@ -1332,16 +1330,15 @@ Local Symbols
 <BR>[Called By]<UL><LI><a href="#[2d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[40]"></a>dhrc_timeout_handler</STRONG> (Thumb, 284 bytes, Stack size 88 bytes, main.o(i.dhrc_timeout_handler))
-<BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = dhrc_timeout_handler &rArr; ble_pbs_cdrc_update &rArr; __2printf
+<P><STRONG><a name="[40]"></a>dhrc_timeout_handler</STRONG> (Thumb, 288 bytes, Stack size 88 bytes, main.o(i.dhrc_timeout_handler))
+<BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = dhrc_timeout_handler &rArr; ble_pbs_drhc_update &rArr; __2printf
 </UL>
 <BR>[Calls]<UL><LI><a href="#[f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sensorsim_measure
 <LI><a href="#[f8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrf_delay_ms
 <LI><a href="#[f6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_data_set_read
-<LI><a href="#[c3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_pbs_cdrc_update
+<LI><a href="#[c3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_pbs_drhc_update
 <LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;app_error_handler_bare
 <LI><a href="#[f7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_f2d
-<LI><a href="#[a8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy4
 <LI><a href="#[c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(i.main)
@@ -1371,12 +1368,11 @@ Local Symbols
 <BR>[Address Reference Count : 1]<UL><LI> main.o(i.main)
 </UL>
 <P><STRONG><a name="[10c]"></a>services_init</STRONG> (Thumb, 206 bytes, Stack size 56 bytes, main.o(i.services_init))
-<BR><BR>[Stack]<UL><LI>Max Depth = 312<LI>Call Chain = services_init &rArr; ble_pbs_init &rArr; pbs_char_add &rArr; app_error_handler_bare
+<BR><BR>[Stack]<UL><LI>Max Depth = 296<LI>Call Chain = services_init &rArr; ble_pbs_init &rArr; pbs_char_add &rArr; app_error_handler_bare
 </UL>
 <BR>[Calls]<UL><LI><a href="#[c5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_pbs_init
 <LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;app_error_handler_bare
 <LI><a href="#[b4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
-<LI><a href="#[a8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy4
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
@@ -1407,7 +1403,7 @@ Local Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(i.main)
 </UL>
-<P><STRONG><a name="[c6]"></a>bsc_data_encode</STRONG> (Thumb, 118 bytes, Stack size 16 bytes, ble_pbs.o(i.bsc_data_encode))
+<P><STRONG><a name="[c6]"></a>bsc_data_encode</STRONG> (Thumb, 134 bytes, Stack size 16 bytes, ble_pbs.o(i.bsc_data_encode))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = bsc_data_encode &rArr; app_error_handler_bare
 </UL>
 <BR>[Calls]<UL><LI><a href="#[d7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uint32_encode

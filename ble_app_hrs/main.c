@@ -28,6 +28,7 @@
 #include "ble_srv_common.h"
 #include "ble_advdata.h"
 #include "ble_advertising.h"
+
 #include "ble_conn_params.h"
 #include "boards.h"
 #include "sensorsim.h"
@@ -51,7 +52,8 @@
 #define CENTRAL_LINK_COUNT               0                                          /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT            1                                          /**<number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
 
-#define DEVICE_NAME                      "Gill_BLE"                               /**< Name of device. Will be included in the advertising data. */                     /**< Manufacturer. Will be passed to Device Information Service. */
+#define DEVICE_NAME                      "Gill_BLE"                               /**< Name of device. Will be included in the advertising data. */
+
 
 // Gill add
 /*UART buffer size. */
@@ -63,7 +65,7 @@
 
 #define APP_TIMER_PRESCALER              0                                          /**< Value of the RTC1 PRESCALER register. */
 #define APP_TIMER_OP_QUEUE_SIZE          4                                          /**< Size of timer operation queues. */
-#define DATA_HEADER_REPORT_INTERVAL      APP_TIMER_TICKS(2000, APP_TIMER_PRESCALER) 
+#define DATA_HEADER_REPORT_INTERVAL      APP_TIMER_TICKS(5000, APP_TIMER_PRESCALER) 
 #define MIN_DRHC_DATA                		 1                                         
 #define MAX_DRHC_DATA               	 	 32                                        
 #define DRHC_INCREMENT          				 1 
@@ -96,16 +98,16 @@ static sensorsim_state_t                 m_drhc_sim_state;
 
 APP_TIMER_DEF(m_data_header_report_id);  
 
-#define APP_ADV_FAST_INTERVAL           0x0028                                      /**< Fast advertising interval (in units of 0.625 ms. This value corresponds to 25 ms.). */
-#define APP_ADV_SLOW_INTERVAL           0x0C80                                      /**< Slow advertising interval (in units of 0.625 ms. This value corrsponds to 2 seconds). */
-#define APP_ADV_FAST_TIMEOUT            30                                          /**< The duration of the fast advertising period (in seconds). */
-#define APP_ADV_SLOW_TIMEOUT            180                                         /**< The duration of the slow advertising period (in seconds). */
+#define APP_ADV_FAST_INTERVAL            0x0028                                      /**< Fast advertising interval (in units of 0.625 ms. This value corresponds to 25 ms.). */
+#define APP_ADV_SLOW_INTERVAL            0x0C80                                      /**< Slow advertising interval (in units of 0.625 ms. This value corrsponds to 2 seconds). */
+#define APP_ADV_FAST_TIMEOUT             30                                          /**< The duration of the fast advertising period (in seconds). */
+#define APP_ADV_SLOW_TIMEOUT             180                                         /**< The duration of the slow advertising period (in seconds). */
 
-//
+//#define DEBUG													 1 
 
-//#define DEBUG												1 
-
-
+#define DEFAULT_SAMPLING_FREQENCY 			 50
+#define DEFAULT_RECORD_DURATION 				 10
+static uint8_t 													 counter; // assigned in main()
 
 static dm_application_instance_t         m_app_handle;                              /**< Application identifier allocated by device manager */
 
@@ -136,25 +138,23 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 /**@brief Function for performing battery measurement and updating the Battery Level characteristic
  *        in Battery Service.
  */
-static void ble_drhc_update(void)
-{
-    uint32_t err_code;
-    uint8_t  drhc_sim_data;
+//static void ble_drhc_update(void)
+//{
+//    uint32_t err_code;
+//    uint8_t  drhc_sim_data;
 
-    drhc_sim_data = (uint8_t)sensorsim_measure(&m_drhc_sim_state, &m_drhc_sim_cfg);
-		
-    //err_code = ble_pbs_dhrc_update(&m_pbs, drhc_sim_data);
-	uint8_t cdrc_sim_data[20] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20}; 
-	err_code = ble_pbs_cdrc_update(&m_pbs, cdrc_sim_data);
-    if ((err_code != NRF_SUCCESS) &&
-        (err_code != NRF_ERROR_INVALID_STATE) &&
-        (err_code != BLE_ERROR_NO_TX_PACKETS) &&
-        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-        )
-    {
-        APP_ERROR_HANDLER(err_code);
-    }
-}
+//    drhc_sim_data = (uint8_t)sensorsim_measure(&m_drhc_sim_state, &m_drhc_sim_cfg);
+
+//    err_code = ble_pbs_drhc_update(&m_pbs, drhc_sim_data);
+//    if ((err_code != NRF_SUCCESS) &&
+//        (err_code != NRF_ERROR_INVALID_STATE) &&
+//        (err_code != BLE_ERROR_NO_TX_PACKETS) &&
+//        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+//        )
+//    {
+//        APP_ERROR_HANDLER(err_code);
+//    }
+//}
 
 /**@brief Function for handling the Battery measurement timer timeout.
  *
@@ -163,40 +163,73 @@ static void ble_drhc_update(void)
  * @param[in] p_context  Pointer used for passing some arbitrary information (context) from the
  *                       app_start_timer() call to the timeout handler.
  */
+//static void battery_level_meas_timeout_handler(void * p_context)
+//{
+//    UNUSED_PARAMETER(p_context);
+//    battery_level_update();
+//}
 static void dhrc_timeout_handler(void * p_context)
 {
-    UNUSED_PARAMETER(p_context);
-	// Simulator flash read
+		UNUSED_PARAMETER(p_context);
 		uint32_t r_xy;
 		uint32_t r_z;
 		uint8_t r_event_ID;
 		uint32_t r_UTC;
+		uint32_t err_code;
 		int ret;
-		ret=flash_data_set_read(NULL, NULL, &r_xy, &r_z, &r_event_ID, &r_UTC);
-		if (ret < 0)	
-			printf("ret error:0\r\n");
-		else
-			printf("ret: %i read x: %f read y: %f read z: %f read_eventID: %i read UTC: %u \n\r", ret,(float)((r_xy&0xFFFF0000)>>16)/100-16,(float)(r_xy&0x0000FFFF)/100-16, (float)r_z/100-16, r_event_ID, r_UTC);
-		nrf_delay_ms(10);
+		uint16_t data_x[4] = {0};
+		uint16_t data_y[4] = {0};
+		uint8_t len = 0;
+		uint8_t p_cal_encoded_buffer[18];
+		
+		if (counter >3)
+		{
+			counter = counter-4;
+			// Simulator flash read
+			for(int i=0;i<4;i++)
+			{
+				ret=flash_data_set_read(NULL, NULL, &r_xy, &r_z, &r_event_ID, &r_UTC);
+				data_x[i] = (uint16_t)((r_xy&0xFFFF0000)>>16)/100-16;
+				data_y[i] = (uint16_t)((r_xy&0x0000FFFF)>>16)/100-16;
+				if (ret < 0)	
+					printf("ret error:0\r\n");
+				else
+					printf("ret: %i read x: %f read y: %f read z: %f read_eventID: %i read UTC: %u \n\r", ret,(float)((r_xy&0xFFFF0000)>>16)/100-16,(float)(r_xy&0x0000FFFF)/100-16, (float)r_z/100-16, r_event_ID, r_UTC);
+				
+				nrf_delay_ms(10);
+			}
+		}
+    //uint8_t  cal_sim_data[18] = {0};
+		
+		
+		//err_code = ble_pbs_cal_update(&m_pbs, cal_sim_data);
+		//for (int i=0;i<18;i++)
+			//p_cal_encoded_buffer[len++] = ;
+//	// Check Download control point
+//    ble_gatts_value_t gatts_value;
+//		memset(&gatts_value, 0, sizeof(gatts_value));
+//		gatts_value.len     = 1;
+//		gatts_value.offset  = 0;
+//		//gatts_value.p_value = &dhrc_data;
+//		err_code = sd_ble_gatts_value_get(m_pbs.conn_handle,
+//																			m_pbs.esc_handles.value_handle,
+//																			&gatts_value);
+//	printf("get value err:%04X, value:%02X\r\n",err_code,gatts_value.p_value[0]);
 	
-	// Check Download control point
-		uint32_t err_code = NRF_SUCCESS;
-    ble_gatts_value_t gatts_value;
-		memset(&gatts_value, 0, sizeof(gatts_value));
-		gatts_value.len     = 1;
-		gatts_value.offset  = 0;
-		err_code = sd_ble_gatts_value_get(m_pbs.conn_handle,
-																			m_pbs.esc_handles.value_handle,
-																			&gatts_value);
-	printf("get value err:%04X, value:%02X\r\n",err_code,gatts_value.p_value[0]);
-	ble_drhc_update();
-//	if (m_pbs.esc_s.download_control_point == 0x01)
-//    ble_drhc_update();
-//	else 
-//	{
-//		printf("download_control_point not set\r\n");
-//	printf("download_control_point:%d\r\n",m_pbs.esc_s.download_control_point);
-//	}
+//    uint8_t  drhc_sim_data;
+//    drhc_sim_data = (uint8_t)sensorsim_measure(&m_drhc_sim_state, &m_drhc_sim_cfg);
+//    err_code = ble_pbs_drhc_update(&m_pbs, drhc_sim_data);
+		
+		
+		
+    if ((err_code != NRF_SUCCESS) &&
+        (err_code != NRF_ERROR_INVALID_STATE) &&
+        (err_code != BLE_ERROR_NO_TX_PACKETS) &&
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+        )
+    {
+        APP_ERROR_HANDLER(err_code);
+    }
 	
 }
 
@@ -254,6 +287,8 @@ static void gap_params_init(void)
 }
 
 
+
+
 /**@brief Function for initializing services that will be used by the application.
  *
  * @details Initialize the Heart Rate, Battery and Device Information services.
@@ -270,38 +305,44 @@ static void services_init(void)
 		BLE_GAP_CONN_SEC_MODE_SET_OPEN(&m_pbs.pbs_cccd_md.cccd_write_perm);
 		
 		// Value setting 
-		bool utc_exist_bit = false;  // bit located in m_pbs.bsc_s.flag 0x10, TBD
+		//bool utc_exist_bit = false;  // bit located in m_pbs.bsc_s.flag 0x10, TBD
 		m_pbs.bsc_s.flag = 0x00;
-		m_pbs.bsc_s.sampling_interval_value = 0x02;
-		m_pbs.bsc_s.led_blinking_duration = 0x03;
-		m_pbs.bsc_s.small_accident_value = 0x1104;
-		m_pbs.bsc_s.medium_accident_level = 0x2205;
-		m_pbs.bsc_s.high_accident_level = 0x06;
-		m_pbs.bsc_s.hard_accelaration_level = 0x07;
-		m_pbs.bsc_s.hard_braking_level = 0x08;
-		m_pbs.bsc_s.hard_steering_level = 0x09;
-		m_pbs.bsc_s.current_utc = 0x0A;
-		
+		m_pbs.bsc_s.sampling_frequency = 50;
+		m_pbs.bsc_s.ble_output_power = -8;
+		m_pbs.bsc_s.small_accident_level_x = 70;
+		m_pbs.bsc_s.small_accident_level_y = 60;
+		m_pbs.bsc_s.medium_accident_level = 40;
+		m_pbs.bsc_s.high_accident_level = 150;
+		m_pbs.bsc_s.hard_accelaration_level = -30;
+		m_pbs.bsc_s.hard_braking_level = 35;
+		m_pbs.bsc_s.hard_steering_level_left = 35;
+		m_pbs.bsc_s.hard_steering_level_right= 35;
+		m_pbs.bsc_s.current_utc = 0;
+		//Beacon Status Report default value
+		m_pbs.bsrc_s.acc_voltage = 0;
+		m_pbs.bsrc_s.ambient_sensor_value = 0;
+		m_pbs.bsrc_s.button_status = 0;
+		// Event Storage Characteristic default value
 		m_pbs.esc_s.download_control_point = 0x00;
 		m_pbs.esc_s.number_of_event = 0x00;
+		// Data Report Header Characteristic default value
+		m_pbs.drhc_s.recorded_data_interval = 20;
+		m_pbs.drhc_s.recorded_data_resolution = 12;
+		m_pbs.drhc_s.recorded_number_of_axis = 3;
+		m_pbs.drhc_s.recorded_event_id = 0;
+		m_pbs.drhc_s.recorded_event_duration = 10;
+		m_pbs.drhc_s.recorded_utc_of_event_start = 0;
+		// Calibration Data Log default value
+		m_pbs.cdrc_s.data_packet_id = 0;
+		m_pbs.cdrc_s.data_packet_length = 18;
+		uint8_t default_cdrc_data[18] = {0};
+		m_pbs.cdrc_s.data_payload = default_cdrc_data;
+		// Raw Data Log default value
+		m_pbs.rdrc_s.data_packet_id = 0;
+		m_pbs.rdrc_s.data_packet_length = 18;
+		uint8_t default_rdrc_data[18] = {0};
+		m_pbs.rdrc_s.data_payload = default_rdrc_data;
 		
-		m_pbs.drhc_s.recorded_data_interval = 0x01;
-		m_pbs.drhc_s.recorded_data_resolution = 0x02;
-		m_pbs.drhc_s.recorded_number_of_axis = 0x03;
-		m_pbs.drhc_s.recorded_event_id = 0x04;
-		m_pbs.drhc_s.recorded_event_duration = 0x05;
-		m_pbs.drhc_s.recorded_utc_of_event_start = 0x06;
-		if (!utc_exist_bit)
-			m_pbs.drhc_s.recorded_utc_of_event_start = 0xFF;
-		m_pbs.cdrc_s.data_packet_id = 0x01;
-		m_pbs.cdrc_s.data_packet_length = 0x12;
-		uint8_t temp_cdrc_data[18] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18};
-		m_pbs.cdrc_s.data_payload = temp_cdrc_data;
-		
-		m_pbs.rdrc_s.data_packet_id = 0x01;
-		m_pbs.rdrc_s.data_packet_length = 0x12;
-		uint8_t temp_rdrc_data[18] = {0};
-		m_pbs.rdrc_s.data_payload = temp_rdrc_data;
 		
     err_code = ble_pbs_init(&m_pbs);
     APP_ERROR_CHECK(err_code);
@@ -380,7 +421,6 @@ static void conn_params_init(void)
     cp_init.first_conn_params_update_delay = FIRST_CONN_PARAMS_UPDATE_DELAY;
     cp_init.next_conn_params_update_delay  = NEXT_CONN_PARAMS_UPDATE_DELAY;
     cp_init.max_conn_params_update_count   = MAX_CONN_PARAMS_UPDATE_COUNT;
-    //cp_init.start_on_notify_cccd_handle    = m_hrs.hrm_handles.cccd_handle;
     cp_init.disconnect_on_fail             = false;
     cp_init.evt_handler                    = on_conn_params_evt;
     cp_init.error_handler                  = conn_params_error_handler;
@@ -453,6 +493,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
 
         case BLE_GAP_EVT_DISCONNECTED:
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
+						err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
             break;
 //				case BLE_GATTS_EVT_WRITE:
 //						printf("BLE_GATTS_EVT_WRITE\r\n");
@@ -760,7 +801,6 @@ int main(void)
 
     // Initialize.
 		uart_config();
-		printf("PBS start initialization\r\n");
     app_trace_init();
     timers_init();
     buttons_leds_init(&erase_bonds);
@@ -788,17 +828,18 @@ int main(void)
 					flash_data_set_write(NULL, cal_acc_test,0, 0);
 				}	
 		}	
-		
+		counter = DEFAULT_SAMPLING_FREQENCY*DEFAULT_RECORD_DURATION/4;
 //		//tx power set test
 //		uint32_t tx_power = 4;
 //		sd_ble_gap_tx_power_set(tx_power);
 
-		// Start execution.
+    // Start execution.
     application_timers_start();
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
+#if PBS_DEBUG
 		printf("ADV start\r\n");
-		
+#endif
     // Enter main loop.
     for (;;)
     {			

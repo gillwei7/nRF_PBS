@@ -41,14 +41,16 @@ typedef struct
 	// Value Exisence Flag
 	uint8_t flag;
 	// Value Setting 
-	uint8_t sampling_interval_value;
-	uint8_t led_blinking_duration;
-	int16_t small_accident_value;
-	int16_t medium_accident_level;
-	int16_t high_accident_level;
+	uint8_t sampling_frequency;
+	int16_t ble_output_power;
+	uint8_t small_accident_level_x;
+	uint8_t small_accident_level_y;
+	uint8_t medium_accident_level;
+	uint8_t high_accident_level;
 	int16_t hard_accelaration_level;
 	int16_t hard_braking_level;
-	int16_t hard_steering_level;
+	uint8_t hard_steering_level_left;
+	uint8_t hard_steering_level_right;
 	uint32_t current_utc;
 }bsc_t;
 
@@ -82,6 +84,13 @@ typedef struct
 	uint8_t *data_payload;
 }rdrc_t;
 
+typedef struct
+{
+	int16_t acc_voltage;
+	uint8_t button_status;
+	int16_t ambient_sensor_value;
+}bsrc_t;
+
 typedef enum
 {
     BLE_PBS_EVT_NOTIFICATION_ENABLED,                             /**< Battery value notification enabled event. */
@@ -108,9 +117,11 @@ typedef struct
 {
 	bsc_t bsc_s;
 	esc_t esc_s;
+	bsrc_t bsrc_s;
 	drhc_t drhc_s;
 	cdrc_t cdrc_s;
 	rdrc_t rdrc_s;
+	
 	 // Security configuration
 	ble_srv_security_mode_t    pbs_attr_md; 
 	ble_srv_cccd_security_mode_t pbs_cccd_md;
@@ -123,6 +134,7 @@ struct ble_pbs_s
   // All Data
 	bsc_t bsc_s;
 	esc_t esc_s;
+	bsrc_t bsrc_s;
 	drhc_t drhc_s;
 	cdrc_t cdrc_s;
 	rdrc_t rdrc_s;
@@ -156,7 +168,10 @@ uint32_t ble_pbs_init(ble_pbs_t * p_pbs);
 
 void ble_bas_on_ble_evt(ble_pbs_t * p_pbs, ble_evt_t * p_ble_evt);
 
-uint32_t ble_pbs_dhrc_update(ble_pbs_t * p_pbs, uint8_t dhrc_data);
+uint32_t ble_pbs_drhc_update(ble_pbs_t * p_pbs, uint8_t dhrc_data);
+
+uint32_t ble_pbs_cal_update(ble_pbs_t * p_pbs, uint8_t* cal_data);
+
 void ble_pbs_on_ble_evt(ble_pbs_t * p_pbs, ble_evt_t * p_ble_evt);
 
 uint32_t ble_pbs_cdrc_update(ble_pbs_t * p_pbs, uint8_t *cdrc_data);

@@ -43,13 +43,14 @@
 #define PBS_CAL_DATA_REPORT_CHAR_SHORT_UUID 			0x2FE4
 #define PBS_RAW_DATA_REPORT_CHAR_SHORT_UUID 			0x2FE5
 
-#define BSC_ALLDATA_LENGTH														19
+#define BSC_ALLDATA_LENGTH														20
 #define ESC_ALLDATA_LENGTH														 3
 #define DRHC_ALLDATA_LENGTH														 9
 #define CDRC_ALLDATA_MIN_LENGTH												 3
 #define CDRC_ALLDATA_MAX_LENGTH												20
 #define RDRC_ALLDATA_MIN_LENGTH												 3
 #define RDRC_ALLDATA_MAX_LENGTH												20
+#define BSRC_ALLDATA_LENGTH														 3
 
 #define PBS_DEBUG																			 1
 
@@ -72,14 +73,16 @@ static void bsc_data_encode(uint8_t * p_encoded_buffer, const bsc_t * p_bsc)
 		APP_ERROR_CHECK_BOOL(p_bsc != NULL);
 		APP_ERROR_CHECK_BOOL(p_encoded_buffer != NULL);
 		p_encoded_buffer[len++] = p_bsc->flag;
-		p_encoded_buffer[len++] = p_bsc->sampling_interval_value;
-		p_encoded_buffer[len++] = p_bsc->led_blinking_duration;
-		len += uint16_encode(p_bsc->small_accident_value, &p_encoded_buffer[len]);
+		p_encoded_buffer[len++] = p_bsc->sampling_frequency;
+		len += uint16_encode(p_bsc->ble_output_power, &p_encoded_buffer[len]);
+		p_encoded_buffer[len++] = p_bsc->small_accident_level_x;
+		p_encoded_buffer[len++] = p_bsc->small_accident_level_y;
 		len += uint16_encode(p_bsc->medium_accident_level, &p_encoded_buffer[len]);
 		len += uint16_encode(p_bsc->high_accident_level, &p_encoded_buffer[len]);
 		len += uint16_encode(p_bsc->hard_accelaration_level, &p_encoded_buffer[len]);
 		len += uint16_encode(p_bsc->hard_braking_level, &p_encoded_buffer[len]);
-		len += uint16_encode(p_bsc->hard_steering_level, &p_encoded_buffer[len]);
+		p_encoded_buffer[len++] = p_bsc->hard_steering_level_left;
+		p_encoded_buffer[len++] = p_bsc->hard_steering_level_right;
 		len += uint32_encode(p_bsc->current_utc, &p_encoded_buffer[len]);
 }
 static void esc_data_encode(uint8_t * p_encoded_buffer, const esc_t * p_esc)
@@ -183,54 +186,8 @@ static void on_disconnect(ble_pbs_t * p_pbs, ble_evt_t * p_ble_evt)
 {
 	p_pbs->conn_handle = BLE_CONN_HANDLE_INVALID;
 }
-//uint32_t ble_pbs_dhrc_update(ble_pbs_t * p_pbs, uint8_t dhrc_data)
-////uint32_t ble_drhc_update(ble_pbs_t * p_pbs, uint8_t* p_dhrc_data)
-//{
-//    if (p_pbs == NULL)
-//    {
-//        return NRF_ERROR_NULL;
-//    }
-//    
-//    uint32_t err_code = NRF_SUCCESS;
-//    ble_gatts_value_t gatts_value;
-//		
-//		// Initialize value struct.
-//		memset(&gatts_value, 0, sizeof(gatts_value));
 
-//		gatts_value.len     = 1;//DRHC_ALLDATA_LENGTH;
-//		gatts_value.offset  = 0;
-//		gatts_value.p_value = &dhrc_data;
-
-//		// Update database.
-//		err_code = sd_ble_gatts_value_set(p_pbs->conn_handle,
-//																			p_pbs->drhc_handles.value_handle,
-//																			&gatts_value);
-//#if PBS_DEBUG
-//		printf("set value err:%04X\r\n",err_code);
-//#endif
-//		// Send value if connected and notifying.
-//		//if ((p_bas->conn_handle != BLE_CONN_HANDLE_INVALID) && p_bas->is_notification_supported)
-//		if (p_pbs->conn_handle != BLE_CONN_HANDLE_INVALID)
-//		{
-//				ble_gatts_hvx_params_t hvx_params;
-
-//				memset(&hvx_params, 0, sizeof(hvx_params));
-
-//				hvx_params.handle = p_pbs->drhc_handles.value_handle;
-//				hvx_params.type   = BLE_GATT_HVX_INDICATION;
-//				hvx_params.offset = gatts_value.offset;
-//				hvx_params.p_len  = &gatts_value.len;
-//				hvx_params.p_data = gatts_value.p_value;
-
-//				err_code = sd_ble_gatts_hvx(p_pbs->conn_handle, &hvx_params);
-//#if PBS_DEBUG
-//			printf("indicate value err:%04X\r\n",err_code);
-//#endif
-//		}
-//    return err_code;
-//}
-
-uint32_t ble_pbs_cdrc_update(ble_pbs_t * p_pbs, uint8_t *cdrc_data)
+uint32_t ble_pbs_drhc_update(ble_pbs_t * p_pbs, uint8_t drhc_data)
 {
     if (p_pbs == NULL)
     {
@@ -243,13 +200,13 @@ uint32_t ble_pbs_cdrc_update(ble_pbs_t * p_pbs, uint8_t *cdrc_data)
 		// Initialize value struct.
 		memset(&gatts_value, 0, sizeof(gatts_value));
 
-		gatts_value.len     = 20;
+		gatts_value.len     = 1;//DRHC_ALLDATA_LENGTH;
 		gatts_value.offset  = 0;
-		gatts_value.p_value = cdrc_data;
+		gatts_value.p_value = &drhc_data;
 
 		// Update database.
 		err_code = sd_ble_gatts_value_set(p_pbs->conn_handle,
-																			p_pbs->cdrc_handles.value_handle,
+																			p_pbs->drhc_handles.value_handle,
 																			&gatts_value);
 #if PBS_DEBUG
 		printf("set value err:%04X\r\n",err_code);
@@ -276,33 +233,55 @@ uint32_t ble_pbs_cdrc_update(ble_pbs_t * p_pbs, uint8_t *cdrc_data)
     return err_code;
 }
 
-
-
-
 static void on_write(ble_pbs_t * p_pbs, ble_evt_t * p_ble_evt)
 {
-		
+		printf("ble_pbs_on_ble_evt_on_write\r\n");
 	// Check if BSC's flag been writen
 #if PBS_DEBUG
-		printf("ble_pbs_on_ble_evt_on_write\r\n");
-		uint16_t tempHandle = p_ble_evt->evt.gatts_evt.params.write.handle;
-		printf("handle:%04X\r\n",tempHandle);
-		uint8_t *tempData = p_ble_evt->evt.gatts_evt.params.write.data;
-	//printf("data length:%d\r\n",sizeof(ble_gatts_evt_write_t)); //26
-		printf("data[0][1]:%02X,%02X\r\n",tempData[0],tempData[1]);
+					uint16_t tempHandle = p_ble_evt->evt.gatts_evt.params.write.handle;
+					printf("handle:%04X\r\n",tempHandle);
+						uint8_t *tempData = p_ble_evt->evt.gatts_evt.params.write.data;
+					//printf("data length:%d\r\n",sizeof(ble_gatts_evt_write_t)); //26
+						printf("data[0][1]:%02X,%02X\r\n",tempData[0],tempData[1]);
 #endif
+//	if (p_pbs->is_notification_supported)
+//    {
+//        ble_gatts_evt_write_t * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 
+//        if (
+//            (p_evt_write->handle == p_pbs->esc_handles.cccd_handle)
+//            &&
+//            (p_evt_write->len == 2)
+//           )
+//        {
+//            // CCCD written, call application event handler
+//            if (p_pbs->evt_handler != NULL)
+//            {
+//                ble_pbs_evt_t evt;
+
+//                if (ble_srv_is_notification_enabled(p_evt_write->data))
+//                {
+//                    evt.evt_type = BLE_PBS_EVT_NOTIFICATION_ENABLED;
+//                }
+//                else
+//                {
+//                    evt.evt_type = BLE_PBS_EVT_NOTIFICATION_DISABLED;
+//                }
+
+//                p_pbs->evt_handler(p_pbs, &evt);
+//            }
+//        }
+//    }
 uint32_t error_code;
 // gill : Need drhc data encode afterward
 uint8_t drhc_sim_data_ary_1[DRHC_ALLDATA_LENGTH] = {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08};
-
+//uint8_t drhc_sim_data_ary_2[DRHC_ALLDATA_LENGTH] = {0xAA,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08};
 ble_gatts_evt_write_t * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
-		
-		if (tempHandle == 0x000D) // ESC value has been writting
+		if (tempHandle == 0x000D)
 		{
 			p_pbs->esc_s.download_control_point = p_evt_write->data[0];
 		}
-		if(tempHandle == 0x000E) // ESC CCCD has been writting
+		if(tempHandle == 0x000E)
     {
 				//CCCD been written
         if ((p_evt_write->handle == p_pbs->esc_handles.cccd_handle) && (p_evt_write->len == 2))
@@ -321,6 +300,8 @@ ble_gatts_evt_write_t * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 #if PBS_DEBUG
 					printf("drhc_notify_flag:%d\r\n",drhc_notify_flag);
 #endif
+					//if (drhc_notify_flag)
+						//error_code = ble_drhc_update(p_pbs,drhc_sim_data_ary_1);
 				}
 		}	
 		if (tempHandle == 0x0014 && esc_notify_flag && drhc_notify_flag)
@@ -374,12 +355,11 @@ uint32_t ble_pbs_init(ble_pbs_t * p_pbs)
 		uint32_t err_code;
 		ble_uuid128_t base_uuid = PBS_UUID_BASE;  // It's invert added from the array sequence, uint8_t [16] array
 		err_code = sd_ble_uuid_vs_add(&base_uuid, &service_uuid.type); // add to Nordic VS UUID table
-		service_uuid.uuid = PBS_SERVICE_SHORT_UUID; // assign short UUID		
+		service_uuid.uuid = PBS_SERVICE_SHORT_UUID; // assign short UUID
+		printf("vs_add:%d\r\n",err_code);			
 		ser_err_code = sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, &service_uuid, &service_handle);
-#if PBS_DEBUG	  
-		printf("vs_add:%d\r\n",err_code);	
 		printf("service_add:%d\r\n",ser_err_code);	
-#endif
+	
 		//Characteristic Setting
 		// The ble_gatts_char_md_t structure uses bit fields. So we reset the memory to zero.
 		
@@ -416,7 +396,7 @@ uint32_t ble_pbs_init(ble_pbs_t * p_pbs)
 														BSC_ALLDATA_LENGTH,
 														&p_pbs->pbs_attr_md,
 														&p_pbs->bsc_handles);
-#if PBS_DEBUG	
+#if PBS_DEBUG
 		printf("bsc_add:%d\r\n",char_err_code);
 #endif											
 												
@@ -436,7 +416,7 @@ uint32_t ble_pbs_init(ble_pbs_t * p_pbs)
 														&p_pbs->esc_handles);
 		// Notify flag
 		esc_notify_flag = false;
-#if PBS_DEBUG			
+#if PBS_DEBUG
 		printf("esc_add:%d\r\n",char_err_code);
 #endif														
 		// Data Report Header Characteristic
@@ -454,9 +434,9 @@ uint32_t ble_pbs_init(ble_pbs_t * p_pbs)
 														&p_pbs->pbs_attr_md,
 														&p_pbs->drhc_handles);
 		drhc_notify_flag = false;
-#if PBS_DEBUG	
+#if PBS_DEBUG
 		printf("drhc_add:%d\r\n",char_err_code);												
-#endif		
+#endif
 		// Cal Data Report Characteristic
 		char_uuid_temp.uuid = PBS_CAL_DATA_REPORT_CHAR_SHORT_UUID;
 		uint16_t CDRC_ALLDATA_LENGTH = p_pbs->cdrc_s.data_packet_length+2;
@@ -473,9 +453,9 @@ uint32_t ble_pbs_init(ble_pbs_t * p_pbs)
 														&p_pbs->pbs_attr_md,
 														&p_pbs->cdrc_handles);
 		cdrc_notify_flag = false;
-#if PBS_DEBUG	
+#if PBS_DEBUG
 		printf("cdrc_add:%d\r\n",char_err_code);
-#endif		
+#endif
 		// Raw Data Report Characteristic
 		char_uuid_temp.uuid = PBS_RAW_DATA_REPORT_CHAR_SHORT_UUID;
 		uint16_t RDRC_ALLDATA_LENGTH = p_pbs->rdrc_s.data_packet_length+2;
@@ -492,7 +472,7 @@ uint32_t ble_pbs_init(ble_pbs_t * p_pbs)
 														&p_pbs->pbs_attr_md,
 														&p_pbs->rdrc_handles);
 		rdrc_notify_flag = false;
-#if PBS_DEBUG			
+#if PBS_DEBUG
 		printf("rdrc_add:%d\r\n",char_err_code);
 #endif													
 
